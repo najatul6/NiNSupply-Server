@@ -31,8 +31,8 @@ async function run() {
     await client.connect();
 
     // Create a database and collection
-    const usersCollection = client.db("BasicTemplate").collection("users");
-    const productsCollection = client.db("BasicTemplate").collection("products");
+    const usersCollection = client.db("NiNSupply").collection("users");
+    const productsCollection = client.db("NiNSupply").collection("products");
 
     // JWT
     app.post("/jwt", async (req, res) => {
@@ -70,6 +70,7 @@ async function run() {
       next();
     };
 
+    // User Related api
     app.post("/createUser", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -81,10 +82,27 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users/:email", async (req, res) => {
+    app.get("/users/:email",verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.get("/users",verifyToken,verifyAdmin,async(req,res)=>{
+      const result = await usersCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    // Product Related api
+    app.post("/createProduct",verifyToken,verifyAdmin, async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    app.get("/products", async (req, res) => {
+      const result = await productsCollection.find({}).toArray();
       res.send(result);
     });
 
