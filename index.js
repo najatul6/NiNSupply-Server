@@ -32,6 +32,7 @@ async function run() {
 
     // Create a database and collection
     const usersCollection = client.db("BasicTemplate").collection("users");
+    const productsCollection = client.db("BasicTemplate").collection("products");
 
     // JWT
     app.post("/jwt", async (req, res) => {
