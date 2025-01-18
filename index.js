@@ -9,7 +9,8 @@ const uri = process.env.MONGODB_URI;
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173", 
+    origin: ["http://localhost:5173", "https://nin-supply.vercel.app/"],
+
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -27,7 +28,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // TODO: Delete 31 Number Line 
+    // TODO: Delete 31 Number Line
     await client.connect();
 
     // Create a database and collection
@@ -74,28 +75,28 @@ async function run() {
     app.post("/createUser", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
-      const existingUser=await usersCollection.findOne(query);
-      if(existingUser){
-        return res.send({ message: 'user already exists', insertedId: null })
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exists", insertedId: null });
       }
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
-    app.get("/users/:email",verifyToken, async (req, res) => {
+    app.get("/users/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
       res.send(result);
     });
 
-    app.get("/allUsers",verifyToken,verifyAdmin,async(req,res)=>{
+    app.get("/allUsers", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
     // Product Related api
-    app.post("/createProduct",verifyToken,verifyAdmin, async (req, res) => {
+    app.post("/createProduct", verifyToken, verifyAdmin, async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
