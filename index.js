@@ -28,7 +28,7 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // TODO: Delete 31 Number Line
-    await client.connect();
+    // await client.connect();
 
     // Create a database and collection
     const usersCollection = client.db("NiNSupply").collection("users");
