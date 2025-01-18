@@ -76,7 +76,7 @@ async function run() {
       const query = { email: user.email };
       const existingUser=await usersCollection.findOne(query);
       if(existingUser){
-        return res.status(409).send({message:"user already exists", insertedId:null});
+        return res.send({ message: 'user already exists', insertedId: null })
       }
       const result = await usersCollection.insertOne(user);
       res.send(result);
@@ -89,8 +89,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users",verifyToken,verifyAdmin,async(req,res)=>{
-      const result = await usersCollection.find({}).toArray();
+    app.get("/allUsers",verifyToken,verifyAdmin,async(req,res)=>{
+      const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
@@ -102,7 +102,7 @@ async function run() {
     });
 
     app.get("/products", async (req, res) => {
-      const result = await productsCollection.find({}).toArray();
+      const result = await productsCollection.find().toArray();
       res.send(result);
     });
 
