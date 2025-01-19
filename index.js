@@ -33,6 +33,7 @@ async function run() {
     // Create a database and collection
     const usersCollection = client.db("NiNSupply").collection("users");
     const productsCollection = client.db("NiNSupply").collection("products");
+    const categoryCollection = client.db("NiNSupply").collection("category");
 
     // JWT
     app.post("/jwt", async (req, res) => {
@@ -103,6 +104,11 @@ async function run() {
 
     app.get("/products", async (req, res) => {
       const result = await productsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/category", async (req, res) => {
+      const result = await categoryCollection.find().toArray();
       res.send(result);
     });
 
