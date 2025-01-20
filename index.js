@@ -34,7 +34,7 @@ async function run() {
     const usersCollection = client.db("NiNSupply").collection("users");
     const productsCollection = client.db("NiNSupply").collection("products");
     const categoryCollection = client.db("NiNSupply").collection("category");
-
+    const cartsCollection = client.db("NiNSupply").collection("carts");
     // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
