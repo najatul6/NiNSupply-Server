@@ -35,6 +35,7 @@ async function run() {
     const productsCollection = client.db("NiNSupply").collection("products");
     const categoryCollection = client.db("NiNSupply").collection("category");
     const cartsCollection = client.db("NiNSupply").collection("carts");
+
     // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -111,6 +112,27 @@ async function run() {
       const result = await categoryCollection.find().toArray();
       res.send(result);
     });
+
+    // Carts Related api
+    app.get('/carts', async (req, res) => {
+      const email = req.query.email;
+      const query = { userEmail: email };
+      const result = await cartsCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.post('/carts', async (req, res) => {
+      const cartsItems = req.body;
+      const result = await cartsCollection.insertOne(cartsItems);
+      res.send(result);
+    })
+
+    app.delete('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
