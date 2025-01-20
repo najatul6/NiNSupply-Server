@@ -114,18 +114,18 @@ async function run() {
     });
 
     // Carts Related api
-    app.get('/carts', async (req, res) => {
+    app.get("/carts", async (req, res) => {
       const email = req.query.email;
       const query = { userEmail: email };
       const result = await cartsCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
-    app.post('/carts', async (req, res) => {
+    app.post("/carts", async (req, res) => {
       const cartsItems = req.body;
       const result = await cartsCollection.insertOne(cartsItems);
       res.send(result);
-    })
+    });
 
     app.delete('/carts/:id', async (req, res) => {
       const id = req.params.id;
@@ -133,6 +133,8 @@ async function run() {
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
     })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
