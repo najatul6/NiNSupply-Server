@@ -35,6 +35,7 @@ async function run() {
     const productsCollection = client.db("NiNSupply").collection("products");
     const categoryCollection = client.db("NiNSupply").collection("category");
     const cartsCollection = client.db("NiNSupply").collection("carts");
+    const orderCollection= client.db("NinSupply").collection("orders")
 
     // JWT
     app.post("/jwt", async (req, res) => {
@@ -134,10 +135,16 @@ async function run() {
       res.send(result)
     }),
 
+    // order Related api
     app.get("/orders", async(req,res)=>{
       const email=req.query.email;
       const query= {userEmail :email};
       const result= await orderCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.get("/allOrders",async(res,req)=>{
+      const result =await orderCollection.find().toArray()
       res.send(result)
     })
 
