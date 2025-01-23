@@ -132,6 +132,13 @@ async function run() {
       const query= {_id: new ObjectId(id)}
       const result =await cartsCollection.deleteOne(query)
       res.send(result)
+    }),
+
+    app.get("/orders", async(req,res)=>{
+      const email=req.query.email;
+      const query= {userEmail :email};
+      const result= await orderCollection.find(query).toArray()
+      res.send(result)
     })
 
 
