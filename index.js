@@ -29,6 +29,7 @@ const bkashConfig = {
   appKey: process.env.BKASH_APP_KEY,
   app_secret: process.env.BKASH_APP_SECRET,
 };
+console.log(process.env.BKASH_USERNAME);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -201,7 +202,7 @@ async function run() {
           };
         // You may use here WebSocket, server-sent events, or other methods to notify your client
         res.send(response);
-        console.log(response);
+        console.log("callBack----",response);
       } catch (e) {
         console.log(e);
       }
