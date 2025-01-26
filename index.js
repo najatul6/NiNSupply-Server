@@ -176,7 +176,7 @@ async function run() {
         res.status(200).send(result.config?.url);
         console.log(result);
       } catch (e) {
-        // console.log(e)
+        console.log(e)
       }
     });
 
