@@ -202,6 +202,7 @@ async function run() {
           };
         // You may use here WebSocket, server-sent events, or other methods to notify your client
         res.send(response);
+        console.log(response);
       } catch (e) {
         console.log(e);
       }
