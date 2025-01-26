@@ -165,14 +165,15 @@ async function run() {
         const { amount, callbackURL, orderID, reference } = req.body
         const paymentDetails = {
           amount: amount || 10,                                                 // your product price
-          callbackURL : callbackURL || 'http://127.0.0.1:3000/bkash-callback',  // your callback route
+          callbackURL : callbackURL,  // your callback route
           orderID : orderID || 'Order_101',                                     // your orderID
           reference : reference || '1'                                          // your reference
         }
         const result =  await createPayment(bkashConfig, paymentDetails)
-        res.send(result)
+        res.status(200).send(result.config?.url)
+        console.log(result);
       } catch (e) {
-        console.log(e)
+        // console.log(e)
       }
     })
     
