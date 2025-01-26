@@ -1,8 +1,9 @@
 require("dotenv").config();
 const express = require("express");
+const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const app = express();
+const {createPayment,executePayment,queryPayment,searchTransaction,refundTransaction} = require("bkash-payment")
 const port = 5000 || process.env.PORT;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
@@ -14,6 +15,14 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+const bkashConfig={
+  base_url:process.env.BKASH_BASE_URL,
+  userName:process.env.BKASH_USERNAME,
+  password:process.env.BKASH_PASSWORD,
+  appKey:process.env.BKASH_APP_KEY,
+  app_secret:process.env.BKASH_APP_SECRET,
+}
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
