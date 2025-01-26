@@ -174,7 +174,6 @@ async function run() {
         };
         const result = await createPayment(bkashConfig, paymentDetails);
         res.send(result);
-        console.log(result);
       } catch (e) {
         console.log(e)
       }
