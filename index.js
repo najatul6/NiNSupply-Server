@@ -173,7 +173,7 @@ async function run() {
           reference: reference || "1", // your reference
         };
         const result = await createPayment(bkashConfig, paymentDetails);
-        res.status(200).send(result.config?.url);
+        res.send(result);
         console.log(result);
       } catch (e) {
         console.log(e)
