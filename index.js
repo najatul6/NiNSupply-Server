@@ -3,6 +3,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const bodyParser = require("body-parser");
+const axios = require("axios");
 const {
   createPayment,
   executePayment,
@@ -14,6 +16,7 @@ const port = 5000 || process.env.PORT;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 app.use(express.json());
+app.use(bodyParser.json());
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://nin-supply.vercel.app"],
@@ -21,6 +24,15 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
+const bkashConfig = {
+  base_url: process.env.BKASH_BASE_URL,
+  userName: process.env.BKASH_USERNAME,
+  password: process.env.BKASH_PASSWORD,
+  appKey: process.env.BKASH_APP_KEY,
+  app_secret: process.env.BKASH_APP_SECRET,
+};
 
 
 
