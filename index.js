@@ -3,7 +3,6 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const axios = require("axios");
 const {
   createPayment,
   executePayment,
@@ -11,7 +10,7 @@ const {
   searchTransaction,
   refundTransaction,
 } = require("bkash-payment");
-const port = process.env.PORT || 5000;
+const port = 5000 || process.env.PORT;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 app.use(express.json());
@@ -40,29 +39,10 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Helper function to authenticate with Bkash
-const authenticateBkash = async () => {
-  try {
-    const response = await axios.post(
-      `${bkashConfig.base_url}/tokenized/checkout/token/grant`,
-      {
-        app_key: bkashConfig.appKey,
-        app_secret: bkashConfig.app_secret,
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Bkash Authentication Error:",
-      error.response?.data || error.message
-    );
-    throw new Error("Authentication with Bkash failed");
-  }
-};
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
+    // TODO: Delete 31 Number Line
     // await client.connect();
 
     // Create a database and collection
@@ -72,7 +52,7 @@ async function run() {
     const cartsCollection = client.db("NiNSupply").collection("carts");
     const orderCollection = client.db("NinSupply").collection("orders");
 
-    const orderCollection = client.db("NiNSupply").collection("orders");
+    // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -169,104 +149,53 @@ async function run() {
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
     });
+    
     // order Related api
-      app.get("/orders", async (req, res) => {
-        const email = req.query.email;
-        const query = { userEmail: email };
-        const result = await orderCollection.find(query).toArray();
-        res.send(result);
-      });
-
-    app.get("/allOrders", async (res, req) => {
-    app.get("/allOrders", async (req, res) => {
+    app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      const query = { userEmail: email };
+      const result = await orderCollection.find(query).toArray();
       res.send(result);
     });
 
-    // Create Payment Endpoint
-    app.post("/bkash-checkout", async (req, res) => {
+    app.get("/allOrders", async (req, res) => {
+      const result = await orderCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Add this route under admin middleware
+    app.post("/bkash-refund", async (req, res) => {
       try {
-        const { amount, callbackURL, orderID, reference } = req.body;
-
-        // Authenticate with Bkash
-        const auth = await authenticateBkash();
-        const accessToken = auth.id_token;
-
-        const paymentDetails = {
-          mode: "0011",
+        const { paymentID, trxID, amount } = req.body;
+        const refundDetails = {
+          paymentID,
+          trxID,
           amount,
-          currency: "BDT",
-          intent: "sale",
-          merchantInvoiceNumber: orderID || "Order_101",
-          callbackURL,
         };
-
-        // Call Bkash create payment API
-        const response = await axios.post(
-          `${bkashConfig.base_url}/tokenized/checkout/create`,
-          paymentDetails,
-          {
-            headers: {
-              Authorization: accessToken,
-              "X-APP-Key": bkashConfig.appKey,
-            },
-          }
-        );
-
-        if (response.data && response.data.bkashURL) {
-          res.status(200).json({ redirectURL: response.data.bkashURL });
-        } else {
-          res.status(400).json({ error: "Bkash payment URL not generated." });
-        }
-      } catch (error) {
-        console.error(
-          "Error in /bkash-checkout:",
-          error.response?.data || error.message
-        );
-        res.status(500).json({ error: "Failed to create Bkash payment" });
+        const result = await refundTransaction(bkashConfig, refundDetails);
+        res.send(result);
+      } catch (e) {
+        console.log(e);
       }
     });
 
-    // Bkash Callback Endpoint
-    app.get("/bkash-callback", async (req, res) => {
+    app.get("/bkash-search", async (req, res) => {
       try {
-        const { status, paymentID } = req.query;
+        const { trxID } = req.query;
+        const result = await searchTransaction(bkashConfig, trxID);
+        res.send(result);
+      } catch (e) {
+        console.log(e);
+      }
+    });
 
-        if (status === "success") {
-          // Authenticate with Bkash
-          const auth = await authenticateBkash();
-          const accessToken = auth.id_token;
-
-          // Execute payment
-          const response = await axios.post(
-            `${bkashConfig.base_url}/tokenized/checkout/execute`,
-            { paymentID },
-            {
-              headers: {
-                Authorization: accessToken,
-                "X-APP-Key": bkashConfig.appKey,
-              },
-            }
-          );
-
-          if (
-            response.data &&
-            response.data.transactionStatus === "Completed"
-          ) {
-            // Payment success, save to DB or notify the client
-            console.log("Payment completed:", response.data);
-            res.status(200).send("Payment successful");
-          } else {
-            res.status(400).send("Payment execution failed");
-          }
-        } else {
-          res.status(400).send("Payment failed or canceled");
-        }
-      } catch (error) {
-        console.error(
-          "Error in /bkash-callback:",
-          error.response?.data || error.message
-        );
-        res.status(500).json({ error: "Bkash callback processing failed" });
+    app.get("/bkash-query", async (req, res) => {
+      try {
+        const { paymentID } = req.query;
+        const result = await queryPayment(bkashConfig, paymentID);
+        res.send(result);
+      } catch (e) {
+        console.log(e);
       }
     });
 
@@ -279,13 +208,13 @@ async function run() {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
-
-  app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
-  });
 }
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
   res.send("Hello World! This is a base template for a Node.js server.");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
 });
