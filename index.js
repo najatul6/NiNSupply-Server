@@ -25,7 +25,6 @@ app.use(
   })
 );
 
-
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL,
   userName: process.env.BKASH_USERNAME,
@@ -33,8 +32,6 @@ const bkashConfig = {
   appKey: process.env.BKASH_APP_KEY,
   app_secret: process.env.BKASH_APP_SECRET,
 };
-
-
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -44,6 +41,26 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// Helper function to authenticate with Bkash
+const authenticateBkash = async () => {
+  try {
+    const response = await axios.post(
+      `${bkashConfig.base_url}/tokenized/checkout/token/grant`,
+      {
+        app_key: bkashConfig.appKey,
+        app_secret: bkashConfig.app_secret,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Bkash Authentication Error:",
+      error.response?.data || error.message
+    );
+    throw new Error("Authentication with Bkash failed");
+  }
+};
 
 async function run() {
   try {
@@ -168,7 +185,93 @@ async function run() {
       res.send(result);
     });
 
-    
+    // Create Payment Endpoint
+    app.post("/bkash-checkout", async (req, res) => {
+      try {
+        const { amount, callbackURL, orderID, reference } = req.body;
+
+        // Authenticate with Bkash
+        const auth = await authenticateBkash();
+        const accessToken = auth.id_token;
+
+        const paymentDetails = {
+          mode: "0011",
+          amount,
+          currency: "BDT",
+          intent: "sale",
+          merchantInvoiceNumber: orderID || "Order_101",
+          callbackURL,
+        };
+
+        // Call Bkash create payment API
+        const response = await axios.post(
+          `${bkashConfig.base_url}/tokenized/checkout/create`,
+          paymentDetails,
+          {
+            headers: {
+              Authorization: accessToken,
+              "X-APP-Key": bkashConfig.appKey,
+            },
+          }
+        );
+
+        if (response.data && response.data.bkashURL) {
+          res.status(200).json({ redirectURL: response.data.bkashURL });
+        } else {
+          res.status(400).json({ error: "Bkash payment URL not generated." });
+        }
+      } catch (error) {
+        console.error(
+          "Error in /bkash-checkout:",
+          error.response?.data || error.message
+        );
+        res.status(500).json({ error: "Failed to create Bkash payment" });
+      }
+    });
+
+    // Bkash Callback Endpoint
+    app.get("/bkash-callback", async (req, res) => {
+      try {
+        const { status, paymentID } = req.query;
+
+        if (status === "success") {
+          // Authenticate with Bkash
+          const auth = await authenticateBkash();
+          const accessToken = auth.id_token;
+
+          // Execute payment
+          const response = await axios.post(
+            `${bkashConfig.base_url}/tokenized/checkout/execute`,
+            { paymentID },
+            {
+              headers: {
+                Authorization: accessToken,
+                "X-APP-Key": bkashConfig.appKey,
+              },
+            }
+          );
+
+          if (
+            response.data &&
+            response.data.transactionStatus === "Completed"
+          ) {
+            // Payment success, save to DB or notify the client
+            console.log("Payment completed:", response.data);
+            res.status(200).send("Payment successful");
+          } else {
+            res.status(400).send("Payment execution failed");
+          }
+        } else {
+          res.status(400).send("Payment failed or canceled");
+        }
+      } catch (error) {
+        console.error(
+          "Error in /bkash-callback:",
+          error.response?.data || error.message
+        );
+        res.status(500).json({ error: "Bkash callback processing failed" });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
