@@ -169,7 +169,7 @@ async function run() {
           reference : reference || '1'                                          // your reference
         }
         const result =  await createPayment(bkashConfig, paymentDetails)
-        res.send(result)
+        res.send(result.bkashURL)
         console.log("BKASH-CHECKOUT__:",result);
       } catch (e) {
         console.log(e)
