@@ -164,7 +164,7 @@ async function run() {
         const { amount, callbackURL, orderID, reference } = req.body
         const paymentDetails = {
           amount: amount || 10,                                                 // your product price
-          callbackURL : callbackURL || 'http://localhost:5173/bkash-callback',  // your callback route
+          callbackURL : callbackURL,  // your callback route
           orderID : orderID || 'Order_101',                                     // your orderID
           reference : reference || '1'                                          // your reference
         }
