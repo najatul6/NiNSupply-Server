@@ -164,7 +164,7 @@ async function run() {
         const { amount, callbackURL, orderID, reference } = req.body
         const paymentDetails = {
           amount: amount || 10,                                                 // your product price
-          callbackURL : callbackURL || 'http://127.0.0.1:3000/bkash-callback',  // your callback route
+          callbackURL : callbackURL || 'http://localhost:5173/bkash-callback',  // your callback route
           orderID : orderID || 'Order_101',                                     // your orderID
           reference : reference || '1'                                          // your reference
         }
@@ -189,6 +189,7 @@ async function run() {
         if(result?.transactionStatus === 'Completed'){
           // payment success
           // insert result in your db
+          console.log("payment success--:",result);
         }
         if(result) response = {
           statusCode : result?.statusCode,
