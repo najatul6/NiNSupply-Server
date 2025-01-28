@@ -193,34 +193,37 @@ async function run() {
         if (result?.transactionStatus === "Completed") {
           const orderDetails = JSON.parse(result?.orderDetails);
           const { itemId, quantity } = orderDetails;
-           // Insert payment and order details into MongoDB
-        const paymentData = {
-          paymentID: result?.paymentID,
-          trxID: result?.trxID,
-          amount: result?.amount,
-          currency: result?.currency,
-          transactionStatus: result?.transactionStatus,
-          paymentExecuteTime: result?.paymentExecuteTime,
-          merchantInvoiceNumber: result?.merchantInvoiceNumber,
-          payerReference: result?.payerReference,
-          customerMsisdn: result?.customerMsisdn,
-          items: itemId.map((id, index) => ({ itemId: id, quantity: quantity[index] })),
-          createdAt: new Date(),
-        };
-
-        // Save to the database (orderCollection)
-        await orderCollection.insertOne(paymentData);
+          // Insert payment and order details into MongoDB
+          const paymentData = {
+            paymentID: result?.paymentID,
+            trxID: result?.trxID,
+            amount: result?.amount,
+            currency: result?.currency,
+            transactionStatus: result?.transactionStatus,
+            paymentExecuteTime: result?.paymentExecuteTime,
+            merchantInvoiceNumber: result?.merchantInvoiceNumber,
+            payerReference: result?.payerReference,
+            customerMsisdn: result?.customerMsisdn,
+            items: itemId.map((id, index) => ({
+              itemId: id,
+              quantity: quantity[index],
+            })),
+            createdAt: new Date(),
+          };
+          console.log(paymentData);
+          // Save to the database (orderCollection)
+          // await orderCollection.insertOne(paymentData);
           // Update the response with success status
-        response = {
-          statusCode: result?.statusCode,
-          statusMessage: result?.statusMessage,
-        };
+          response = {
+            statusCode: result?.statusCode,
+            statusMessage: result?.statusMessage,
+          };
         }
-        // if (result)
-        //   response = {
-        //     statusCode: result?.statusCode,
-        //     statusMessage: result?.statusMessage,
-        //   };
+        if (result)
+          response = {
+            statusCode: result?.statusCode,
+            statusMessage: result?.statusMessage,
+          };
         // You may use here WebSocket, server-sent events, or other methods to notify your client
         res.send(response);
       } catch (e) {
