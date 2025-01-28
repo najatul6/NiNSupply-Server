@@ -174,7 +174,6 @@ async function run() {
         };
         const result = await createPayment(bkashConfig, paymentDetails);
         res.send(result.bkashURL);
-        console.log("BKASH-CHECKOUT__:", result);
       } catch (e) {
         console.log(e);
       }
@@ -192,15 +191,36 @@ async function run() {
           result = await executePayment(bkashConfig, paymentID);
 
         if (result?.transactionStatus === "Completed") {
-          // payment success
-          // insert result in your db
-          console.log("payment success--:", result);
+          const orderDetails = JSON.parse(result?.orderDetails);
+          const { itemId, quantity } = orderDetails;
+           // Insert payment and order details into MongoDB
+        const paymentData = {
+          paymentID: result?.paymentID,
+          trxID: result?.trxID,
+          amount: result?.amount,
+          currency: result?.currency,
+          transactionStatus: result?.transactionStatus,
+          paymentExecuteTime: result?.paymentExecuteTime,
+          merchantInvoiceNumber: result?.merchantInvoiceNumber,
+          payerReference: result?.payerReference,
+          customerMsisdn: result?.customerMsisdn,
+          items: itemId.map((id, index) => ({ itemId: id, quantity: quantity[index] })),
+          createdAt: new Date(),
+        };
+
+        // Save to the database (orderCollection)
+        await orderCollection.insertOne(paymentData);
+          // Update the response with success status
+        response = {
+          statusCode: result?.statusCode,
+          statusMessage: result?.statusMessage,
+        };
         }
-        if (result)
-          response = {
-            statusCode: result?.statusCode,
-            statusMessage: result?.statusMessage,
-          };
+        // if (result)
+        //   response = {
+        //     statusCode: result?.statusCode,
+        //     statusMessage: result?.statusMessage,
+        //   };
         // You may use here WebSocket, server-sent events, or other methods to notify your client
         res.send(response);
       } catch (e) {
