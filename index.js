@@ -100,7 +100,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users/:email",verifyToken, async (req, res) => {
+    app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
@@ -137,13 +137,13 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/carts", async (req, res) => {
+    app.post("/carts",verifyToken, async (req, res) => {
       const cartsItems = req.body;
       const result = await cartsCollection.insertOne(cartsItems);
       res.send(result);
     });
 
-    app.delete("/carts/:id", async (req, res) => {
+    app.delete("/carts/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
@@ -151,7 +151,7 @@ async function run() {
     });
 
     // order Related api
-    app.get("/orders", async (req, res) => {
+    app.get("/orders",verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { userEmail: email };
       const result = await orderCollection.find(query).toArray();
