@@ -200,12 +200,15 @@ async function run() {
           };
         }
     
-        // Send message back to the frontend
+        // Send message back to the frontend with the correct frontend URL
         res.send(`
           <script>
             window.opener.postMessage(
-              ${JSON.stringify({ status: result?.transactionStatus === "Completed" ? "success" : "failed" })}, 
-              "http://localhost:5173"
+              ${JSON.stringify({
+                status:
+                  result?.transactionStatus === "Completed" ? "success" : "failed",
+              })}, 
+              "${process.env.FRONTEND_URL}"
             );
             window.close();
           </script>
@@ -214,7 +217,7 @@ async function run() {
         console.log(e);
         res.send(`
           <script>
-            window.opener.postMessage({ status: "failed" }, "http://localhost:5173");
+            window.opener.postMessage({ status: "failed" }, "${process.env.FRONTEND_URL}");
             window.close();
           </script>
         `);
