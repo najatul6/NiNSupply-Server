@@ -179,50 +179,30 @@ async function run() {
       }
     });
 
-    app.get("/bkash-callback", async (req, res) => {
+    app.get("/bkash-callback", async(req, res) => {
       try {
-        const { status, paymentID } = req.query;
-        let result;
+        const { status, paymentID } = req.query
+        let result
         let response = {
-          statusCode: "4000",
-          statusMessage: "Payment Failed",
-        };
-    
-        if (status === "success") {
-          result = await executePayment(bkashConfig, paymentID);
+          statusCode : '4000',
+          statusMessage : 'Payment Failed'
         }
+        if(status === 'success')  result =  await executePayment(bkashConfig, paymentID)
     
-        if (result?.transactionStatus === "Completed") {
-          // Payment success: store transaction in DB
-          response = {
-            statusCode: "0000",
-            statusMessage: "Payment Successful",
-          };
+        if(result?.transactionStatus === 'Completed'){
+          // payment success
+          // insert result in your db
         }
-    
-        // Send message back to the frontend with the correct frontend URL
-        res.send(`
-          <script>
-            window.opener.postMessage(
-              ${JSON.stringify({
-                status:
-                  result?.transactionStatus === "Completed" ? "success" : "failed",
-              })}, 
-              "${process.env.FRONTEND_URL}"
-            );
-            window.close();
-          </script>
-        `);
+        if(result) response = {
+          statusCode : result?.statusCode,
+          statusMessage : result?.statusMessage
+        }
+        // You may use here WebSocket, server-sent events, or other methods to notify your client
+        res.send(response)
       } catch (e) {
-        console.log(e);
-        res.send(`
-          <script>
-            window.opener.postMessage({ status: "failed" }, "${process.env.FRONTEND_URL}");
-            window.close();
-          </script>
-        `);
+        console.log(e)
       }
-    });
+    })
     
 
     // Add this route under admin middleware
