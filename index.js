@@ -187,24 +187,40 @@ async function run() {
           statusCode: "4000",
           statusMessage: "Payment Failed",
         };
-        if (status === "success")
+    
+        if (status === "success") {
           result = await executePayment(bkashConfig, paymentID);
-
-        if (result?.transactionStatus === "Completed") {
-          // payment success
-          // insert result in your db
         }
-        if (result)
+    
+        if (result?.transactionStatus === "Completed") {
+          // Payment success: store transaction in DB
           response = {
-            statusCode: result?.statusCode,
-            statusMessage: result?.statusMessage,
+            statusCode: "0000",
+            statusMessage: "Payment Successful",
           };
-        // You may use here WebSocket, server-sent events, or other methods to notify your client
-        res.send(response);
+        }
+    
+        // Send message back to the frontend
+        res.send(`
+          <script>
+            window.opener.postMessage(
+              ${JSON.stringify({ status: result?.transactionStatus === "Completed" ? "success" : "failed" })}, 
+              "http://localhost:5173"
+            );
+            window.close();
+          </script>
+        `);
       } catch (e) {
         console.log(e);
+        res.send(`
+          <script>
+            window.opener.postMessage({ status: "failed" }, "http://localhost:5173");
+            window.close();
+          </script>
+        `);
       }
     });
+    
 
     // Add this route under admin middleware
     app.post("/bkash-refund", async (req, res) => {
