@@ -10,7 +10,7 @@ const {
   searchTransaction,
   refundTransaction,
 } = require("bkash-payment");
-const port = 5000 || process.env.PORT;
+const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 app.use(express.json());
@@ -51,7 +51,7 @@ async function run() {
     const productsCollection = client.db("NiNSupply").collection("products");
     const categoryCollection = client.db("NiNSupply").collection("category");
     const cartsCollection = client.db("NiNSupply").collection("carts");
-    const orderCollection = client.db("NinSupply").collection("orders");
+    const orderCollection = client.db("NiNSupply").collection("all-orders");
 
     // JWT
     app.post("/jwt", async (req, res) => {
