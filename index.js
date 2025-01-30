@@ -170,17 +170,17 @@ async function run() {
     app.post("/bkash-checkout", async (req, res) => {
       try {
         const { amount, callbackURL, orderID, reference } = req.body;
-    
+
         const paymentDetails = {
           amount: amount || 10, // Product price
           callbackURL: callbackURL, // Callback route
           orderID: orderID || "Order_101", // Order ID
           reference: reference || "1", // Reference
         };
-    
+
         // Create Bkash payment
         const result = await createPayment(bkashConfig, paymentDetails);
-    
+
         if (result.statusMessage === "Successful") {
           res.send(result);
         } else {
@@ -191,12 +191,10 @@ async function run() {
         res.status(500).send({ error: "Internal Server Error" });
       }
     });
-    
-    
 
-    app.get("/bkash-callback", async (req, res) => {
+    app.post("/bkash-callback", async (req, res) => {
       try {
-        const { status, paymentID, userEmail, products } = req.query;
+        const { status, paymentID, userEmail, products } = req.body;
     
         let result;
         let response = {
@@ -209,17 +207,22 @@ async function run() {
         }
     
         if (result?.transactionStatus === "Completed") {
-          // Attach user email & timestamp to products
+          if (!products || !Array.isArray(products)) {
+            // Handle the case where products are missing or not an array
+            throw new Error("Products data is missing or invalid");
+          }
+    
+          // Ensure products is an array and attach user email & timestamp to each product
           const productsWithUser = products.map((product) => ({
             ...product,
             userEmail,
             createdAt: new Date(),
           }));
     
-          // ✅ Save order in database
+          // Save order in database
           await orderCollection.insertMany(productsWithUser);
     
-          // ✅ Delete cart items for this user
+          // Delete cart items for this user
           await cartsCollection.deleteMany({ userEmail });
     
           response = {
@@ -231,9 +234,10 @@ async function run() {
         res.send(response);
       } catch (e) {
         console.log("Bkash callback error:", e);
-        res.status(500).send({ error: "Internal Server Error" });
+        res.status(500).send({ error: "Internal Server Error", message: e.message });
       }
     });
+    
     
 
     // Add this route under admin middleware
