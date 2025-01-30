@@ -24,13 +24,12 @@ app.use(
 );
 
 const bkashConfig = {
-  base_url : process.env.BKASH_BASE_URL,
+  base_url: process.env.BKASH_BASE_URL,
   username: process.env.BKASH_USERNAME,
   password: process.env.BKASH_PASSWORD,
   app_key: process.env.BKASH_APP_KEY,
-  app_secret: process.env.BKASH_APP_SECRET
- }
-
+  app_secret: process.env.BKASH_APP_SECRET,
+};
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -153,10 +152,7 @@ async function run() {
     });
 
     // order Related api
-    app.post("/orders", async (req, res) => {
-
-    });
-
+    app.post("/orders", async (req, res) => {});
 
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
@@ -171,88 +167,107 @@ async function run() {
     });
 
     // Payment Related api
-    app.post("/bkash-checkout", async(req, res) => {
+    app.post("/bkash-checkout", async (req, res) => {
       try {
-        const { amount, callbackURL, orderID, reference,product } = req.body
+        const { amount, callbackURL, orderID, reference, products, userEmail } = req.body;
+    
         const paymentDetails = {
-          amount: amount || 10,                                                 // your product price
-          callbackURL : callbackURL ,  // your callback route
-          orderID : orderID || 'Order_101',                                     // your orderID
-          reference : reference || '1'                                          // your reference
+          amount: amount || 10, // product price
+          callbackURL: callbackURL, // callback route
+          orderID: orderID || 'Order_101', // order ID
+          reference: reference || '1' // reference
+        };
+    
+        // Create Bkash payment
+        const result = await createPayment(bkashConfig, paymentDetails);
+    
+        if (result.statusMessage === 'Successful') {
+          // Ensure each product includes userEmail before inserting
+          const productsWithUser = products.map(product => ({
+            ...product,
+            userEmail, // Attach user email
+            createdAt: new Date() // Add timestamp
+          }));
+    
+          // Insert multiple products into orderCollection
+          await orderCollection.insertMany(productsWithUser);
+    
+          // Delete cart items for the user
+          await cartsCollection.deleteMany({ userEmail });
+    
+          res.send(result);
+        } else {
+          res.status(400).send({ message: "Bkash payment failed", result });
         }
-        const result =  await createPayment(bkashConfig, paymentDetails)
-        if(result.statusMessage==='Successful'){
-          await orderCollection.insertOne(product)
-          await cartsCollection.deleteMany({userEmail:product.userEmail})
-        }
-        res.send(result)
       } catch (e) {
-        console.log(e)
+        console.error("Bkash checkout error:", e);
+        res.status(500).send({ error: "Internal Server Error" });
       }
-    })
+    });
     
-    app.get("/bkash-callback", async(req, res) => {
+
+    app.get("/bkash-callback", async (req, res) => {
       try {
-        const { status, paymentID } = req.query
-        let result
+        const { status, paymentID } = req.query;
+        let result;
         let response = {
-          statusCode : '4000',
-          statusMessage : 'Payment Failed'
-        }
-        if(status === 'success')  result =  await executePayment(bkashConfig, paymentID)
-    
-        if(result?.transactionStatus === 'Completed'){
+          statusCode: "4000",
+          statusMessage: "Payment Failed",
+        };
+        if (status === "success")
+          result = await executePayment(bkashConfig, paymentID);
+
+        if (result?.transactionStatus === "Completed") {
           // payment success
           // insert result in your db
         }
-        if(result) response = {
-          statusCode : result?.statusCode,
-          statusMessage : result?.statusMessage
-        }
+        if (result)
+          response = {
+            statusCode: result?.statusCode,
+            statusMessage: result?.statusMessage,
+          };
         // You may use here WebSocket, server-sent events, or other methods to notify your client
-        res.send(response)
+        res.send(response);
       } catch (e) {
-        console.log(e)
+        console.log(e);
       }
-    })
-    
+    });
+
     // Add this route under admin middleware
     app.post("/bkash-refund", async (req, res) => {
       try {
-        const { paymentID, trxID, amount } = req.body
+        const { paymentID, trxID, amount } = req.body;
         const refundDetails = {
           paymentID,
           trxID,
           amount,
-        }
-        const result = await refundTransaction(bkashConfig, refundDetails)
-        res.send(result)
+        };
+        const result = await refundTransaction(bkashConfig, refundDetails);
+        res.send(result);
       } catch (e) {
-        console.log(e)
+        console.log(e);
       }
-    })
-    
+    });
+
     app.get("/bkash-search", async (req, res) => {
       try {
-        const { trxID } = req.query
-        const result = await searchTransaction(bkashConfig, trxID)
-        res.send(result)
+        const { trxID } = req.query;
+        const result = await searchTransaction(bkashConfig, trxID);
+        res.send(result);
       } catch (e) {
-        console.log(e)
+        console.log(e);
       }
-    })
-    
+    });
+
     app.get("/bkash-query", async (req, res) => {
       try {
-        const { paymentID } = req.query
-        const result = await queryPayment(bkashConfig, paymentID)
-        res.send(result)
+        const { paymentID } = req.query;
+        const result = await queryPayment(bkashConfig, paymentID);
+        res.send(result);
       } catch (e) {
-        console.log(e)
+        console.log(e);
       }
-    })
-
-  
+    });
 
     // TODO: COMMONET 249 & 250 NUMBER LINE
     // Send a ping to confirm a successful connection
