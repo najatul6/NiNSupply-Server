@@ -169,32 +169,19 @@ async function run() {
     // Payment Related api
     app.post("/bkash-checkout", async (req, res) => {
       try {
-        const { amount, callbackURL, orderID, reference, products, userEmail } = req.body;
+        const { amount, callbackURL, orderID, reference } = req.body;
     
         const paymentDetails = {
-          amount: amount || 10, // product price
-          callbackURL: callbackURL, // callback route
-          orderID: orderID || 'Order_101', // order ID
-          reference: reference || '1' // reference
+          amount: amount || 10, // Product price
+          callbackURL: callbackURL, // Callback route
+          orderID: orderID || "Order_101", // Order ID
+          reference: reference || "1", // Reference
         };
     
         // Create Bkash payment
         const result = await createPayment(bkashConfig, paymentDetails);
     
-        if (result.statusMessage === 'Successful') {
-          // Ensure each product includes userEmail before inserting
-          const productsWithUser = products.map(product => ({
-            ...product,
-            userEmail, // Attach user email
-            createdAt: new Date() // Add timestamp
-          }));
-    
-          // Insert multiple products into orderCollection
-          await orderCollection.insertMany(productsWithUser);
-    
-          // Delete cart items for the user
-          await cartsCollection.deleteMany({ userEmail });
-    
+        if (result.statusMessage === "Successful") {
           res.send(result);
         } else {
           res.status(400).send({ message: "Bkash payment failed", result });
@@ -205,33 +192,49 @@ async function run() {
       }
     });
     
+    
 
     app.get("/bkash-callback", async (req, res) => {
       try {
-        const { status, paymentID } = req.query;
+        const { status, paymentID, userEmail, products } = req.query;
+    
         let result;
         let response = {
           statusCode: "4000",
           statusMessage: "Payment Failed",
         };
-        if (status === "success")
+    
+        if (status === "success") {
           result = await executePayment(bkashConfig, paymentID);
-
-        if (result?.transactionStatus === "Completed") {
-          // payment success
-          // insert result in your db
         }
-        if (result)
+    
+        if (result?.transactionStatus === "Completed") {
+          // Attach user email & timestamp to products
+          const productsWithUser = products.map((product) => ({
+            ...product,
+            userEmail,
+            createdAt: new Date(),
+          }));
+    
+          // ✅ Save order in database
+          await orderCollection.insertMany(productsWithUser);
+    
+          // ✅ Delete cart items for this user
+          await cartsCollection.deleteMany({ userEmail });
+    
           response = {
-            statusCode: result?.statusCode,
-            statusMessage: result?.statusMessage,
+            statusCode: "2000",
+            statusMessage: "Payment Successful, Order Placed!",
           };
-        // You may use here WebSocket, server-sent events, or other methods to notify your client
+        }
+    
         res.send(response);
       } catch (e) {
-        console.log(e);
+        console.log("Bkash callback error:", e);
+        res.status(500).send({ error: "Internal Server Error" });
       }
     });
+    
 
     // Add this route under admin middleware
     app.post("/bkash-refund", async (req, res) => {
