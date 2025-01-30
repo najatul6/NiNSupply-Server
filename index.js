@@ -182,6 +182,19 @@ async function run() {
         const result = await createPayment(bkashConfig, paymentDetails);
     
         if (result.statusMessage === 'Successful') {
+          // Ensure each product includes userEmail before inserting
+          const productsWithUser = products.map(product => ({
+            ...product,
+            userEmail, // Attach user email
+            createdAt: new Date() // Add timestamp
+          }));
+    
+          // Insert multiple products into orderCollection
+          await orderCollection.insertMany(productsWithUser);
+    
+          // Delete cart items for the user
+          await cartsCollection.deleteMany({ userEmail });
+    
           res.send(result);
         } else {
           res.status(400).send({ message: "Bkash payment failed", result });
@@ -195,7 +208,7 @@ async function run() {
 
     app.get("/bkash-callback", async (req, res) => {
       try {
-        const { status, paymentID,products,userEmail } = req.query;
+        const { status, paymentID } = req.query;
         let result;
         let response = {
           statusCode: "4000",
@@ -207,18 +220,6 @@ async function run() {
         if (result?.transactionStatus === "Completed") {
           // payment success
           // insert result in your db
-          // Ensure each product includes userEmail before inserting
-          const productsWithUser = products.map(product => ({
-            ...product,
-            userEmail, // Attach user email
-            createdAt: new Date() // Add timestamp
-          }));
-    
-          // Insert multiple products into orderCollection
-          await orderCollection.insertMany(productsWithUser);
-    
-          // Delete cart items for the user
-          await cartsCollection.deleteMany({ userEmail });
         }
         if (result)
           response = {
