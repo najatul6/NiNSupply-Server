@@ -16,37 +16,37 @@ app.use(
 );
 
 // bKash Authentication Middleware
-app.use(async (req, res, next) => {
-  try {
-    const { data } = await axios.post(
-      process.env.BKASH_BASE_URL,
-      {
-        app_key: process.env.BKASH_APP_KEY,
-        app_secret: process.env.BKASH_APP_SECRET,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          username: process.env.BKASH_USERNAME,
-          password: process.env.BKASH_PASSWORD,
-        },
-      }
-    );
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: error.message });
-  }
-});
+// app.use(async (req, res, next) => {
+//   try {
+//     const { data } = await axios.post(
+//       process.env.BKASH_BASE_URL,
+//       {
+//         app_key: process.env.BKASH_APP_KEY,
+//         app_secret: process.env.BKASH_APP_SECRET,
+//       },
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//           Accept: "application/json",
+//           username: process.env.BKASH_USERNAME,
+//           password: process.env.BKASH_PASSWORD,
+//         },
+//       }
+//     );
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({ error: error.message });
+//   }
+// });
 
-const getBkashHeaders = async () => {
-  return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    authorization: globals.get("id_token"),
-    "x-app-key": process.env.bkash_api_key,
-  };
-};
+// const getBkashHeaders = async () => {
+//   return {
+//     "Content-Type": "application/json",
+//     Accept: "application/json",
+//     authorization: globals.get("id_token"),
+//     "x-app-key": process.env.bkash_api_key,
+//   };
+// };
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
