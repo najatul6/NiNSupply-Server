@@ -168,7 +168,7 @@ async function run() {
     });
 
     // order Related api
-    app.post("/orders", async (req, res) => {});
+    app.post("/orders", async (req, res) => { });
 
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
