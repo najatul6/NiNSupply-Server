@@ -131,6 +131,14 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/carts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: req.body };
+      const result = await cartsCollection.updateOne(query, update);
+      res.send(result);
+    });
+
     // order Related api
     app.post("/orders", async (req, res) => { });
 
