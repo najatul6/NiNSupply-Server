@@ -15,38 +15,6 @@ app.use(
   cors({ origin: ["https://nin-supply.vercel.app", "http://localhost:5173"] })
 );
 
-// bKash Authentication Middleware
-// app.use(async (req, res, next) => {
-//   try {
-//     const { data } = await axios.post(
-//       process.env.BKASH_BASE_URL,
-//       {
-//         app_key: process.env.BKASH_APP_KEY,
-//         app_secret: process.env.BKASH_APP_SECRET,
-//       },
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//           Accept: "application/json",
-//           username: process.env.BKASH_USERNAME,
-//           password: process.env.BKASH_PASSWORD,
-//         },
-//       }
-//     );
-//     next();
-//   } catch (error) {
-//     return res.status(401).json({ error: error.message });
-//   }
-// });
-
-// const getBkashHeaders = async () => {
-//   return {
-//     "Content-Type": "application/json",
-//     Accept: "application/json",
-//     authorization: globals.get("id_token"),
-//     "x-app-key": process.env.bkash_api_key,
-//   };
-// };
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -182,59 +150,7 @@ async function run() {
       res.send(result);
     });
 
-    // Payment Related api
-    // Create Payment
-    app.post("/api/bkash/payment", async (req, res) => {
-      const { amount, userId } = req.body;
-      globals.set("userId", userId);
-      try {
-        const { data } = await axios.post(
-          process.env.bkash_create_payment_url,
-          {
-            mode: "0011",
-            payerReference: " ",
-            callbackURL: "http://localhost:5000/api/bkash/payment/callback",
-            amount,
-            currency: "BDT",
-            intent: "sale",
-            merchantInvoiceNumber: "Inv" + uuidv4().substring(0, 5),
-          },
-          {
-            headers: await getBkashHeaders(),
-          }
-        );
-        return res.status(200).json({ bkashURL: data.bkashURL });
-      } catch (error) {
-        return res.status(401).json({ error: error.message });
-      }
-    });
-
-    // Payment Callback
-    app.get("/api/bkash/payment/callback", async (req, res) => {
-      const { paymentID, status } = req.query;
-      if (status === "success") {
-        try {
-          const { data } = await axios.post(
-            process.env.bkash_execute_payment_url,
-            { paymentID },
-            {
-              headers: await getBkashHeaders(),
-            }
-          );
-          if (data.statusCode === "0000") {
-            return res.redirect(`http://localhost:5173/success`);
-          } else {
-            return res.redirect(
-              `http://localhost:5173/error?message=${data.statusMessage}`
-            );
-          }
-        } catch (error) {
-          return res.redirect(
-            `http://localhost:5173/error?message=${error.message}`
-          );
-        }
-      }
-    });
+    
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
