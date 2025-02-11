@@ -140,7 +140,11 @@ async function run() {
     });
 
     // order Related api
-    app.post("/orders", async (req, res) => { });
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      const result = await orderCollection.insertOne(order);
+      res.send(result);
+     });
 
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
