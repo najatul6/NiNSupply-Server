@@ -38,7 +38,7 @@ async function run() {
     // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1h"});
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
       res.send({ token });
     });
 
@@ -88,10 +88,49 @@ async function run() {
       res.send(result);
     });
 
+    // User related API
+
+    // Update user's role (PATCH request)
+    app.patch("/users/:id/role", verifyToken, verifyAdmin, async (req, res) => {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      // Validate the new role
+      if (!role || !['user', 'admin'].includes(role)) {
+        return res.status(400).send({ message: "Invalid role" });
+      }
+
+      // Find the user by ID and update their role
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: { role: role } };
+
+      try {
+        const result = await usersCollection.updateOne(query, update);
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "User not found or role is already the same" });
+        }
+        res.send({ message: "User role updated successfully" });
+      } catch (error) {
+        console.error("Error updating user role:", error);
+        res.status(500).send({ message: "Failed to update role" });
+      }
+    });
+
+    // Delete user (DELETE request)
+    app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
     app.get("/allUsers", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+
+
 
     // Product Related api
     app.post("/createProduct", verifyToken, verifyAdmin, async (req, res) => {
@@ -99,6 +138,7 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
+
 
     app.get("/products", async (req, res) => {
       const result = await productsCollection.find().toArray();
@@ -144,7 +184,7 @@ async function run() {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       res.send(result);
-     });
+    });
 
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
@@ -158,7 +198,7 @@ async function run() {
       res.send(result);
     });
 
-    
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
