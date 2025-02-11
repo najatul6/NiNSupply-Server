@@ -185,15 +185,19 @@ async function run() {
     });
 
     app.get('/totalRevenue', async (req, res) => {
-      const revenue = await orderCollection.aggregate([
+      const result = await orderCollection.aggregate([
+        {
+          $match: { status: "Completed" } // Only completed orders
+        },
         {
           $group: {
             _id: null,
-            totalRevenue: { $sum: "$totalAmount" }  // Sum of the totalAmount field
+            totalRevenue: { $sum: "$totalPrice" } // Summing up the totalPrice field
           }
         }
       ]).toArray();
-      const totalRevenue = revenue[0]?.totalRevenue || 0;
+    
+      const totalRevenue = result[0]?.totalRevenue || 0; // Default to 0 if no completed orders
       res.send({ totalRevenue });
     })
 
