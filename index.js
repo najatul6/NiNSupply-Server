@@ -187,7 +187,7 @@ async function run() {
     app.get('/totalRevenue', async (req, res) => {
       const result = await orderCollection.aggregate([
         {
-          $match: { status: "Completed" } // Only completed orders
+          $match: { status: "Pending" } // Only completed orders
         },
         {
           $group: {
