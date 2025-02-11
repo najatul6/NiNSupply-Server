@@ -184,6 +184,19 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/totalRevenue', async (req, res) => {
+      const revenue = await orderCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalAmount" }  // Sum of the totalAmount field
+          }
+        }
+      ]).toArray();
+      const totalRevenue = revenue[0]?.totalRevenue || 0;
+      res.send({ totalRevenue });
+    })
+
 
 
     // Send a ping to confirm a successful connection
