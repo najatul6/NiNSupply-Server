@@ -91,29 +91,15 @@ async function run() {
     // User related API
 
     // Update user's role (PATCH request)
-    app.patch("/users/:id/role", verifyToken, verifyAdmin, async (req, res) => {
+    app.patch("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
       const { id } = req.params;
       const { role } = req.body;
-
-      // Validate the new role
-      if (!role || !['user', 'admin'].includes(role)) {
-        return res.status(400).send({ message: "Invalid role" });
-      }
 
       // Find the user by ID and update their role
       const query = { _id: new ObjectId(id) };
       const update = { $set: { role: role } };
-
-      try {
-        const result = await usersCollection.updateOne(query, update);
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "User not found or role is already the same" });
-        }
-        res.send({ message: "User role updated successfully" });
-      } catch (error) {
-        console.error("Error updating user role:", error);
-        res.status(500).send({ message: "Failed to update role" });
-      }
+      const result = await usersCollection.updateOne(query, update);
+      res.send(result);
     });
 
     // Delete user (DELETE request)
