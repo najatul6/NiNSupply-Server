@@ -146,8 +146,16 @@ async function run() {
 
     app.post("/carts", async (req, res) => {
       const cartsItems = req.body;
-      const result = await cartsCollection.insertOne(cartsItems);
-      res.send(result);
+      const existingItem = await cartsCollection.findOne({ userEmail: cartsItems.userEmail, productId: cartsItems.productId });
+      if (existingItem) {
+        const query = { userEmail: cartsItems.userEmail, productId: cartsItems.productId };
+        const update = { $set: { quantity: cartsItems.quantity } };
+        const result = await cartsCollection.updateOne(query, update);
+        res.send(result);
+      } else {
+        const result = await cartsCollection.insertOne(cartsItems);
+        res.send(result);
+      }
     });
 
     app.delete("/carts/:id", async (req, res) => {
