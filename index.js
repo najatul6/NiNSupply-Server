@@ -208,7 +208,7 @@ async function run() {
           revenueData.pending = item.totalRevenue;
         } else if (item._id === "Processing") {
           revenueData.processing = item.totalRevenue;
-        } else if (item._id === "Completed") {
+        } else if (item._id === "Complete") {
           revenueData.completed = item.totalRevenue;
         }
       });
