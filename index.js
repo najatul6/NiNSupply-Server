@@ -38,7 +38,7 @@ async function run() {
     // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1m" });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
       res.send({ token });
     });
 
@@ -47,15 +47,18 @@ async function run() {
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
       }
+      
       const token = req.headers.authorization.split(" ")[1];
+      
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-          return res.status(401).send({ message: "unauthorized access" });
+        if (err || !decoded) {
+          return res.status(401).send({ message: "Token expired or unauthorized access" });
         }
         req.decoded = decoded;
         next();
       });
     };
+    
 
     // Verify Admin
     const verifyAdmin = async (req, res, next) => {
