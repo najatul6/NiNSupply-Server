@@ -208,6 +208,21 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: req.body };
+      const result = await orderCollection.updateOne(query, update);
+      res.send(result);
+    });
+
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/allOrders", async (req, res) => {
       const result = await orderCollection.find().toArray();
       res.send(result);
