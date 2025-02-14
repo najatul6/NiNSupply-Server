@@ -128,9 +128,16 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/products", async (req, res) => {
       const result = await productsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.put("/products/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: req.body };
+      const result = await productsCollection.updateOne(query, update);
       res.send(result);
     });
 
