@@ -134,6 +134,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/products/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // Category Related api
     app.get("/category", async (req, res) => {
       const result = await categoryCollection.find().toArray();
