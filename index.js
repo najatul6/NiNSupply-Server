@@ -4,6 +4,7 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
+const serviceAccount = require("./servAcc.json");
 
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -14,6 +15,10 @@ app.use(
   cors({ origin: ["https://nin-supply.vercel.app", "http://localhost:5173"] })
 );
 
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -92,7 +97,7 @@ async function run() {
       res.send(result);
     });
 
-    // User related API
+  
 
     // Update user's role (PATCH request)
     app.patch("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
@@ -110,6 +115,10 @@ async function run() {
     app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
+      const user = await usersCollection.findOne(query);
+      if (user.uid) {
+        await admin.auth().deleteUser(user.uid);
+      }
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
