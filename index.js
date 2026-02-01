@@ -12,10 +12,14 @@ const uri = process.env.MONGODB_URI;
 app.use(express.json());
 
 
-app.use(
-  cors({ origin: ["https://nin-supply.vercel.app", "http://localhost:5173"] })
-);
 
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://nin-supply.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 const serviceAccount={
   
   "type":process.env.TYPE,
