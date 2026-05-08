@@ -286,8 +286,8 @@ async function run() {
       const result = await orderCollection.aggregate([
         {
           $group: {
-            _id: "$status", // Group by status
-            totalRevenue: { $sum: "$totalPrice" }, // Sum the totalPrice for each status
+            _id: "$status", 
+            totalRevenue: { $sum: "$totalPrice" }, 
           }
         }
       ]).toArray();
