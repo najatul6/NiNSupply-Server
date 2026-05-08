@@ -310,7 +310,7 @@ async function run() {
         }
       });
 
-      res.send(revenueData); // Send the revenue data for each status
+      res.send(revenueData); 
     });
 
 
