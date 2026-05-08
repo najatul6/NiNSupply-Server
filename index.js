@@ -11,31 +11,26 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 app.use(express.json());
 
-
-
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://nin-supply.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
-const serviceAccount={
-  
-  "type":process.env.TYPE,
-  "project_id":process.env.PROJECT_ID,
-  "private_key_id":process.env.PRIVATE_KEY_ID,
-  "private_key":process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
-  "client_email":process.env.CLIENT_EMAIL,
-  "client_id":process.env.CLIENT_ID,
-  "auth_uri":process.env.AUTH_URI,
-  "token_uri":process.env.TOKEN_URI,
-  "auth_provider_x509_cert_url":process.env.AUTH_PROVIDER_X509_CERT_URL,
-  "client_x509_cert_url":process.env.CLIENT_X509_CERT_URL,
-  "universe_domain":process.env.UNIVERSE_DOMAIN
-
-}
-
+const serviceAccount = {
+  type: process.env.TYPE,
+  project_id: process.env.PROJECT_ID,
+  private_key_id: process.env.PRIVATE_KEY_ID,
+  private_key: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.CLIENT_EMAIL,
+  client_id: process.env.CLIENT_ID,
+  auth_uri: process.env.AUTH_URI,
+  token_uri: process.env.TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
+  client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
+  universe_domain: process.env.UNIVERSE_DOMAIN,
+};
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -65,7 +60,9 @@ async function run() {
     // JWT
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
       res.send({ token });
     });
 
@@ -74,18 +71,19 @@ async function run() {
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
       }
-      
+
       const token = req.headers.authorization.split(" ")[1];
-      
+
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err || !decoded) {
-          return res.status(401).send({ message: "Token expired or unauthorized access" });
+          return res
+            .status(401)
+            .send({ message: "Token expired or unauthorized access" });
         }
         req.decoded = decoded;
         next();
       });
     };
-    
 
     // Verify Admin
     const verifyAdmin = async (req, res, next) => {
@@ -118,8 +116,6 @@ async function run() {
       res.send(result);
     });
 
-  
-
     // Update user's role (PATCH request)
     app.patch("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
       const { id } = req.params;
@@ -132,7 +128,7 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/users/:email", verifyToken,  async (req, res) => {
+    app.put("/users/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
       const query = { email: email };
       const update = { $set: req.body };
@@ -152,13 +148,10 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/allUsers", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
-
-
 
     // Product Related api
     app.post("/createProduct", verifyToken, verifyAdmin, async (req, res) => {
@@ -224,7 +217,6 @@ async function run() {
       const result = await cartsCollection.find(query).toArray();
       res.send(result);
     });
-    
 
     app.post("/carts", async (req, res) => {
       const cartsItems = req.body;
@@ -283,14 +275,16 @@ async function run() {
 
     // Calculate Total Revenue for Different Order Statuses
     app.get("/totalRevenue", async (req, res) => {
-      const result = await orderCollection.aggregate([
-        {
-          $group: {
-            _id: "$status", 
-            totalRevenue: { $sum: "$totalPrice" }, 
-          }
-        }
-      ]).toArray();
+      const result = await orderCollection
+        .aggregate([
+          {
+            $group: {
+              _id: "$status",
+              totalRevenue: { $sum: "$totalPrice" },
+            },
+          },
+        ])
+        .toArray();
 
       // Format the result with default values
       const revenueData = {
@@ -300,7 +294,7 @@ async function run() {
       };
 
       // Map the result to corresponding statuses
-      result.forEach(item => {
+      result.forEach((item) => {
         if (item._id === "Pending") {
           revenueData.pending = item.totalRevenue;
         } else if (item._id === "Processing") {
@@ -310,16 +304,13 @@ async function run() {
         }
       });
 
-      res.send(revenueData); 
+      res.send(revenueData);
     });
-
-
-
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
+      "Pinged your deployment. You successfully connected to MongoDB!",
     );
   } finally {
     // Ensures that the client will close when you finish/error
